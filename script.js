@@ -1,5 +1,5 @@
-import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three'; // Résolu via l'import map défini dans index.html
+import { OrbitControls } from './lib/OrbitControls.js'; // Le chemin vers votre fichier local OrbitControls.js
 
 // --- Chapitre 1: Créer votre première scène 3D avec ThreeJS ---
 

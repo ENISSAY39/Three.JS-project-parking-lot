@@ -1,0 +1,29 @@
+{
+  "name": "parking-threejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "http-server -p 5500 -c-1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ENISSAY39/Three.JS-project-parking-lot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ENISSAY39/Three.JS-project-parking-lot/issues"
+  },
+  "homepage": "https://github.com/ENISSAY39/Three.JS-project-parking-lot#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "private": true
+}

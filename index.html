@@ -3,56 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parking Three.js</title>
+    <title>Test Three.js Import</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Map module specifier 'three' to the local three.module.js so OrbitControls can import it -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "./lib/three.module.js"
+            }
+        }
+    </script>
 </head>
 <body>
-    <script type="module">
-        import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
-        import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js';
-
-        // Votre code Three.js ira ici
-        // Il est préférable de le déplacer vers script.js pour une meilleure organisation, mais pour le premier pas, on le met ici.
-
-        // 1. Créer la scène
-        const scene = new THREE.Scene();
-
-        // 2. Créer la caméra
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 5, 10); // Positionner la caméra
-
-        // 3. Créer le rendu (renderer)
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        // 4. Ajouter des contrôles (pour pouvoir naviguer dans la scène)
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; // Pour un mouvement plus fluide
-        controls.dampingFactor = 0.25;
-
-        // 5. Créer un plan de sol simple (pour l'instant)
-        const groundGeometry = new THREE.PlaneGeometry(50, 50);
-        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2; // Orienter le plan pour qu'il soit horizontal
-        scene.add(ground);
-
-        // 6. Fonction d'animation/rendu
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update(); // Mettre à jour les contrôles
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // 7. Gérer le redimensionnement de la fenêtre
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-    <script src="script.js" type="module"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

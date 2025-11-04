@@ -1,0 +1,303 @@
+import * as THREE from './lib/three.module.js'; // Le chemin vers votre fichier local three.module.js
+import { OrbitControls } from './lib/OrbitControls.js'; // Le chemin vers votre fichier local OrbitControls.js
+
+// --- Chapitre 1: Créer votre première scène 3D avec ThreeJS ---
+
+// 1. Scène (Scene)
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcce0ff); // Un fond bleu clair pour simuler le ciel
+
+// 2. Caméra (Camera)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 10, 20); // Position initiale de la caméra
+
+// 3. Rendu (Renderer)
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true; // Activer les cartes d'ombres
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Type d'ombre pour un rendu plus doux
+document.body.appendChild(renderer.domElement);
+
+// 4. Contrôles (OrbitControls)
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; // Pour un mouvement de caméra plus fluide
+controls.dampingFactor = 0.25;
+controls.maxPolarAngle = Math.PI / 2 - 0.1; // Empêche la caméra de passer sous le sol
+
+
+// --- Chapitre 3: Travailler avec des sources de lumière dans ThreeJS ---
+
+// Lumière ambiante : éclaire uniformément toute la scène
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+// Lumière directionnelle : simule la lumière du soleil
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+directionalLight.position.set(10, 25, 15); // Position de la lumière
+directionalLight.castShadow = true; // Cette lumière projette des ombres
+scene.add(directionalLight);
+
+// Configuration des ombres pour la DirectionalLight
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 50;
+directionalLight.shadow.camera.left = -25;
+directionalLight.shadow.camera.right = 25;
+directionalLight.shadow.camera.top = 25;
+directionalLight.shadow.camera.bottom = -25;
+
+// Optionnel: Aides visuelles pour la lumière directionnelle et sa caméra d'ombres (pour le débogage)
+// const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 5);
+// scene.add(lightHelper);
+// const shadowCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
+// scene.add(shadowCameraHelper);
+
+
+// --- Chapitre 4: Travailler avec ThreeJS materials ---
+
+// Matériau pour l'asphalte (sol du parking)
+const groundMaterial = new THREE.MeshStandardMaterial({
+    color: 0x333333, // Gris foncé
+    roughness: 0.8,   // Très rugueux
+    metalness: 0.0    // Non métallique
+});
+
+// Matériau pour les marquages au sol (blanc)
+const lineMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffffff, // Blanc pur
+    roughness: 0.2,
+    metalness: 0.0
+});
+
+// Matériau pour les piliers et le toit (gris clair)
+const structureMaterial = new THREE.MeshStandardMaterial({
+    color: 0xcccccc, // Gris clair
+    roughness: 0.5,
+    metalness: 0.1
+});
+
+// Matériau pour le bâtiment (blanc cassé)
+const buildingMaterial = new THREE.MeshStandardMaterial({
+    color: 0xe0e0e0, // Blanc cassé
+    roughness: 0.7,
+    metalness: 0.0
+});
+
+// Matériau pour les arbres (troncs)
+const treeTrunkMaterial = new THREE.MeshStandardMaterial({
+    color: 0x8B4513, // Marron
+    roughness: 0.9,
+    metalness: 0.0
+});
+
+// Matériau pour les arbres (feuillage)
+const treeFoliageMaterial = new THREE.MeshStandardMaterial({
+    color: 0x228B22, // Vert forêt
+    roughness: 0.8,
+    metalness: 0.0
+});
+
+// Matériau pour les bordures de trottoir (jaune/noir)
+const curbYellowMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+const curbBlackMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+
+
+// --- Construction de la scène du parking ---
+
+// Sol du parking
+const groundGeometry = new THREE.PlaneGeometry(60, 60);
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2; // Orienter le plan pour qu'il soit horizontal
+ground.receiveShadow = true; // Le sol peut recevoir des ombres
+ground.position.y = 0;
+scene.add(ground);
+
+// Bâtiment principal (derrière le parking)
+const buildingGeometry = new THREE.BoxGeometry(40, 20, 15);
+const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+building.position.set(-10, 10, -25);
+building.receiveShadow = true;
+building.castShadow = true; // Pour projeter des ombres sur d'autres éléments
+scene.add(building);
+
+// Abri de parking (toit et piliers)
+const roofGeometry = new THREE.BoxGeometry(25, 0.3, 15);
+const roof = new THREE.Mesh(roofGeometry, structureMaterial);
+roof.position.set(0, 4.5, -5);
+roof.castShadow = true;
+roof.receiveShadow = true;
+scene.add(roof);
+
+// Piliers de l'abri
+const pillarGeometry = new THREE.BoxGeometry(0.8, 4.5, 0.8);
+const pillar1 = new THREE.Mesh(pillarGeometry, structureMaterial);
+pillar1.position.set(-10, 2.25, -10);
+pillar1.castShadow = true;
+pillar1.receiveShadow = true;
+scene.add(pillar1);
+
+const pillar2 = pillar1.clone();
+pillar2.position.set(10, 2.25, -10);
+scene.add(pillar2);
+
+const pillar3 = pillar1.clone();
+pillar3.position.set(-10, 2.25, 0);
+scene.add(pillar3);
+
+const pillar4 = pillar1.clone();
+pillar4.position.set(10, 2.25, 0);
+scene.add(pillar4);
+
+
+// Marquages au sol (places de parking)
+const createParkingLine = (x, z, rotationY = 0) => {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 5), lineMaterial);
+    line.position.set(x, 0.025, z);
+    line.rotation.y = rotationY;
+    line.castShadow = true;
+    line.receiveShadow = true;
+    scene.add(line);
+    return line;
+};
+
+// Lignes principales
+createParkingLine( -7, -2.5);
+createParkingLine(  -7,  2.5);
+createParkingLine(  7, -2.5);
+createParkingLine(  7,  2.5);
+
+// Lignes courtes (délimitations)
+createParkingLine(-3, -5, Math.PI / 2);
+createParkingLine(-3, 0, Math.PI / 2);
+createParkingLine(-3, 5, Math.PI / 2);
+
+createParkingLine(3, -5, Math.PI / 2);
+createParkingLine(3, 0, Math.PI / 2);
+createParkingLine(3, 5, Math.PI / 2);
+
+
+// Création de bordures de trottoir avec alternance jaune/noir
+const createCurbSection = (x, z, length, isYellow) => {
+    const curbGeometry = new THREE.BoxGeometry(isYellow ? 0.5 : 0.5, 0.3, length);
+    const curb = new THREE.Mesh(curbGeometry, isYellow ? curbYellowMaterial : curbBlackMaterial);
+    curb.position.set(x, 0.15, z);
+    curb.castShadow = true;
+    curb.receiveShadow = true;
+    scene.add(curb);
+    return curb;
+};
+
+// Bordure le long du côté droit
+let currentZ = -29.5;
+while (currentZ < 30) {
+    createCurbSection(20, currentZ, 2.5, Math.random() > 0.5); // Alternance aléatoire
+    currentZ += 2.5;
+}
+
+// Bordure le long du bâtiment (simplifié)
+createCurbSection(-29.5, -20, 10, true);
+createCurbSection(-29.5, -10, 10, false);
+createCurbSection(-29.5, 0, 10, true);
+createCurbSection(-29.5, 10, 10, false);
+
+
+// Voitures simplifiées
+const createSimpleCar = (x, z, color, rotationY = 0) => {
+    const carGroup = new THREE.Group();
+
+    const bodyGeometry = new THREE.BoxGeometry(1.8, 0.8, 4);
+    const carBodyMaterial = new THREE.MeshStandardMaterial({ color: color, roughness: 0.4, metalness: 0.1 });
+    const carBody = new THREE.Mesh(bodyGeometry, carBodyMaterial);
+    carBody.position.y = 0.4;
+    carBody.castShadow = true;
+    carBody.receiveShadow = true;
+    carGroup.add(carBody);
+
+    const cabinGeometry = new THREE.BoxGeometry(1.6, 0.7, 2);
+    const carCabin = new THREE.Mesh(cabinGeometry, carBodyMaterial);
+    carCabin.position.set(0, 1.1, 0);
+    carCabin.castShadow = true;
+    carCabin.receiveShadow = true;
+    carGroup.add(carCabin);
+
+    const wheelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+    const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8, metalness: 0.0 });
+
+    const addWheel = (px, py, pz) => {
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        wheel.rotation.x = Math.PI / 2;
+        wheel.position.set(px, py, pz);
+        wheel.castShadow = true;
+        wheel.receiveShadow = true;
+        carGroup.add(wheel);
+    };
+
+    addWheel(0.8, 0.4, 1.5);
+    addWheel(-0.8, 0.4, 1.5);
+    addWheel(0.8, 0.4, -1.5);
+    addWheel(-0.8, 0.4, -1.5);
+
+    carGroup.position.set(x, 0, z);
+    carGroup.rotation.y = rotationY;
+    scene.add(carGroup);
+    return carGroup;
+};
+
+createSimpleCar(-5, -2.5, 0x666666, Math.PI / 2); // Voiture grise
+createSimpleCar( 5, -2.5, 0x882222, Math.PI / 2); // Voiture rouge
+createSimpleCar( -5, 2.5, 0x444488, Math.PI / 2); // Voiture bleue
+createSimpleCar( 5, 2.5, 0x228822, Math.PI / 2); // Voiture verte
+
+
+// Arbres (simplifiés)
+const createSimpleTree = (x, z, height = 5) => {
+    const treeGroup = new THREE.Group();
+
+    // Troncs
+    const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.7, height, 8);
+    const trunk = new THREE.Mesh(trunkGeometry, treeTrunkMaterial);
+    trunk.position.y = height / 2;
+    trunk.castShadow = true;
+    trunk.receiveShadow = true;
+    treeGroup.add(trunk);
+
+    // Feuillage
+    const foliageGeometry = new THREE.IcosahedronGeometry(2 + Math.random(), 0); // Forme aléatoire
+    const foliage = new THREE.Mesh(foliageGeometry, treeFoliageMaterial);
+    foliage.position.y = height + 1.5;
+    foliage.castShadow = true;
+    foliage.receiveShadow = true;
+    treeGroup.add(foliage);
+
+    treeGroup.position.set(x, 0, z);
+    scene.add(treeGroup);
+};
+
+// Quelques arbres le long du parking
+createSimpleTree(18, -20);
+createSimpleTree(18, -10);
+createSimpleTree(18, 0);
+createSimpleTree(18, 10);
+createSimpleTree(18, 20);
+
+createSimpleTree(10, -28);
+createSimpleTree(0, -28);
+createSimpleTree(-10, -28);
+
+
+// --- Fonction d'animation et de rendu ---
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update(); // Important pour les contrôles de caméra avec damping
+    renderer.render(scene, camera);
+}
+animate();
+
+
+// --- Gestion du redimensionnement de la fenêtre ---
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
