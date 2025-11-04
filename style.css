@@ -1,2 +1,9 @@
-body { margin: 0; overflow: hidden; }
-canvas { display: block; }
+body {
+    margin: 0;
+    overflow: hidden; /* Empêche les barres de défilement */
+    background-color: #cce0ff; /* Correspond à la couleur de fond de la scène */
+}
+
+canvas {
+    display: block;
+}
