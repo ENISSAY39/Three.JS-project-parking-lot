@@ -1,27 +1,58 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23007acc'/><text x='50' y='65' font-size='60' text-anchor='middle' fill='white' font-family='Arial'>P</text></svg>">
-
-  <meta charset="utf-8" />
-  <title>Parking vide - Three.js</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { margin: 0; overflow: hidden; background: #bfd6ea; }
-    #ui { position: fixed; top: 10px; left: 10px; z-index: 10; }
-  </style>
-
-  <!-- mappe le specifier "three" vers le module ES sur unpkg -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.158.0/build/three.module.js"
-    }
-  }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Three.js</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="ui"></div>
-  <script type="module" src="./src/main.js"></script>
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
+        import { OrbitControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+
+        // Votre code Three.js ira ici
+        // Il est préférable de le déplacer vers script.js pour une meilleure organisation, mais pour le premier pas, on le met ici.
+
+        // 1. Créer la scène
+        const scene = new THREE.Scene();
+
+        // 2. Créer la caméra
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10); // Positionner la caméra
+
+        // 3. Créer le rendu (renderer)
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 4. Ajouter des contrôles (pour pouvoir naviguer dans la scène)
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // Pour un mouvement plus fluide
+        controls.dampingFactor = 0.25;
+
+        // 5. Créer un plan de sol simple (pour l'instant)
+        const groundGeometry = new THREE.PlaneGeometry(50, 50);
+        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, side: THREE.DoubleSide });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2; // Orienter le plan pour qu'il soit horizontal
+        scene.add(ground);
+
+        // 6. Fonction d'animation/rendu
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Mettre à jour les contrôles
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 7. Gérer le redimensionnement de la fenêtre
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+    <script src="script.js" type="module"></script>
 </body>
 </html>
