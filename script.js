@@ -23,6 +23,9 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; // Pour un mouvement de caméra plus fluide
 controls.dampingFactor = 0.25;
 controls.maxPolarAngle = Math.PI / 2 - 0.1; // Empêche la caméra de passer sous le sol
+// Cible provisoire (mise à jour après création de l'abri)
+controls.target.set(0, 0.5, -5);
+camera.lookAt(controls.target);
 
 
 // --- Chapitre 3: Travailler avec des sources de lumière dans ThreeJS ---
@@ -114,67 +117,99 @@ ground.position.y = 0;
 scene.add(ground);
 
 // Bâtiment principal (derrière le parking)
-const buildingGeometry = new THREE.BoxGeometry(40, 20, 15);
+const buildingGeometry = new THREE.BoxGeometry(20, 30, 30);
 const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
-building.position.set(-10, 10, -25);
+building.position.set(-18, 10, -7);
 building.receiveShadow = true;
 building.castShadow = true; // Pour projeter des ombres sur d'autres éléments
 scene.add(building);
 
 // Abri de parking (toit et piliers)
-const roofGeometry = new THREE.BoxGeometry(25, 0.3, 15);
+// Taille réduite: longueur (Z) 26, largeur (X) 8 pour couvrir une seule colonne
+const roofGeometry = new THREE.BoxGeometry(26, 0.3, 8);
 const roof = new THREE.Mesh(roofGeometry, structureMaterial);
-roof.position.set(0, 4.5, -5);
+// On pivote l'abri de 90° pour que sa longueur (25) soit parallèle à la ligne d'arbres (axe Z)
+roof.rotation.y = Math.PI / 2;
+// On l'approche des arbres (x≈18) mais on laisse un petit espace (~2.5 unités)
+// Décale l'ensemble abri + voitures vers la gauche (éloigné des arbres à droite)
+const roofCenter = { x: -2, y: 4.5, z: -5 };
+roof.position.set(roofCenter.x, roofCenter.y, roofCenter.z);
 roof.castShadow = true;
 roof.receiveShadow = true;
 scene.add(roof);
 
+// Après création de l'abri, on vise son centre
+controls.target.set(roofCenter.x, 0.5, roofCenter.z);
+camera.lookAt(controls.target);
+
 // Piliers de l'abri
 const pillarGeometry = new THREE.BoxGeometry(0.8, 4.5, 0.8);
 const pillar1 = new THREE.Mesh(pillarGeometry, structureMaterial);
-pillar1.position.set(-10, 2.25, -10);
+// Avec l'abri tourné: largeur sur X = 8 (±4), longueur sur Z = 26 (±13)
+// On place les piliers avec un léger retrait des bords
+const halfW = 8 / 2, halfL = 26 / 2;
+const insetX = 1.0, insetZ = 2.0;
+const px = halfW - insetX;     // ≈ 3.0
+const pz = halfL - insetZ;     // ≈ 11.0
+pillar1.position.set(roofCenter.x - px, 2.25, roofCenter.z - pz);
 pillar1.castShadow = true;
 pillar1.receiveShadow = true;
 scene.add(pillar1);
 
 const pillar2 = pillar1.clone();
-pillar2.position.set(10, 2.25, -10);
+pillar2.position.set(roofCenter.x + px, 2.25, roofCenter.z - pz);
 scene.add(pillar2);
 
 const pillar3 = pillar1.clone();
-pillar3.position.set(-10, 2.25, 0);
+pillar3.position.set(roofCenter.x - px, 2.25, roofCenter.z + pz);
 scene.add(pillar3);
 
 const pillar4 = pillar1.clone();
-pillar4.position.set(10, 2.25, 0);
+pillar4.position.set(roofCenter.x + px, 2.25, roofCenter.z + pz);
 scene.add(pillar4);
 
 
-// Marquages au sol (places de parking)
-const createParkingLine = (x, z, rotationY = 0) => {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 5), lineMaterial);
-    line.position.set(x, 0.025, z);
-    line.rotation.y = rotationY;
-    line.castShadow = true;
-    line.receiveShadow = true;
-    scene.add(line);
-    return line;
+// Paramètres de sortie (exit), dos d'âne et marquages
+const EXIT_Z = -12;       // léger décalage plus à gauche de la sortie
+const EXIT_GAP_Z = 3.5;   // demi-largeur de l'ouverture dans la bordure/arbres
+
+// Marquages au sol (place de parking). orientation: 'z' (longueur sur Z) ou 'x' (longueur sur X)
+const createSpotMarkings = (cx, cz, spotW = 2.6, spotL = 5.2, lineT = 0.08, orientation = 'z') => {
+    if (orientation === 'z') {
+        // Longueur sur Z
+        const sideGeom = new THREE.BoxGeometry(lineT, 0.05, spotL);
+        const backGeom = new THREE.BoxGeometry(spotW, 0.05, lineT);
+
+        const left = new THREE.Mesh(sideGeom, lineMaterial);
+        left.position.set(cx - spotW / 2, 0.026, cz);
+        scene.add(left);
+
+        const right = new THREE.Mesh(sideGeom, lineMaterial);
+        right.position.set(cx + spotW / 2, 0.026, cz);
+        scene.add(right);
+
+        const back = new THREE.Mesh(backGeom, lineMaterial);
+        back.position.set(cx, 0.026, cz - spotL / 2);
+        scene.add(back);
+        return;
+    }
+
+    // Longueur sur X
+    const sideGeomX = new THREE.BoxGeometry(spotL, 0.05, lineT);
+    const backGeomX = new THREE.BoxGeometry(lineT, 0.05, spotW);
+
+    const near = new THREE.Mesh(sideGeomX, lineMaterial);
+    near.position.set(cx, 0.026, cz - spotW / 2);
+    scene.add(near);
+
+    const far = new THREE.Mesh(sideGeomX, lineMaterial);
+    far.position.set(cx, 0.026, cz + spotW / 2);
+    scene.add(far);
+
+    const backX = new THREE.Mesh(backGeomX, lineMaterial);
+    backX.position.set(cx - spotL / 2, 0.026, cz);
+    scene.add(backX);
 };
-
-// Lignes principales
-createParkingLine( -7, -2.5);
-createParkingLine(  -7,  2.5);
-createParkingLine(  7, -2.5);
-createParkingLine(  7,  2.5);
-
-// Lignes courtes (délimitations)
-createParkingLine(-3, -5, Math.PI / 2);
-createParkingLine(-3, 0, Math.PI / 2);
-createParkingLine(-3, 5, Math.PI / 2);
-
-createParkingLine(3, -5, Math.PI / 2);
-createParkingLine(3, 0, Math.PI / 2);
-createParkingLine(3, 5, Math.PI / 2);
 
 
 // Création de bordures de trottoir avec alternance jaune/noir
@@ -191,7 +226,10 @@ const createCurbSection = (x, z, length, isYellow) => {
 // Bordure le long du côté droit
 let currentZ = -29.5;
 while (currentZ < 30) {
-    createCurbSection(20, currentZ, 2.5, Math.random() > 0.5); // Alternance aléatoire
+    // Laisse une ouverture au niveau de la sortie
+    if (Math.abs(currentZ - EXIT_Z) > EXIT_GAP_Z) {
+        createCurbSection(20, currentZ, 2.5, Math.random() > 0.5); // Alternance aléatoire
+    }
     currentZ += 2.5;
 }
 
@@ -200,6 +238,35 @@ createCurbSection(-29.5, -20, 10, true);
 createCurbSection(-29.5, -10, 10, false);
 createCurbSection(-29.5, 0, 10, true);
 createCurbSection(-29.5, 10, 10, false);
+
+// Dos d'âne (speed bump) semi-cylindrique (demi-cercle extrudé)
+function createSpeedBump(x, z, radius = 0.35, lengthZ = 10) {
+    const shape = new THREE.Shape();
+    // Profil demi-cercle orienté vers le HAUT (part de -r,0 → arc au-dessus → +r,0)
+    shape.moveTo(-radius, 0);
+    shape.absarc(0, 0, radius, Math.PI, 0, true); // clockwise: passe par la partie haute (y>0)
+    shape.lineTo(-radius, 0); // ferme la base plate
+
+    const bumpGeo = new THREE.ExtrudeGeometry(shape, {
+        depth: lengthZ,
+        bevelEnabled: false,
+        curveSegments: 24
+    });
+    // Centrer en Z (l'extrusion part vers +Z)
+    bumpGeo.translate(0, 0, -lengthZ / 2);
+
+    const bumpMat = new THREE.MeshStandardMaterial({ color: 0xf2c744, roughness: 0.6, metalness: 0.0 });
+    const bump = new THREE.Mesh(bumpGeo, bumpMat);
+    // Poser au sol: la base du profil est à y=0 → on le pose juste au-dessus pour éviter le z-fighting
+    bump.position.set(x, 0.001, z);
+    bump.castShadow = true;
+    bump.receiveShadow = true;
+    scene.add(bump);
+    return bump;
+}
+
+// place le dos d'âne au centre de la voie, légèrement à gauche de la bordure
+createSpeedBump(16, EXIT_Z, 0.35, 10);
 
 
 // Voitures simplifiées
@@ -244,10 +311,26 @@ const createSimpleCar = (x, z, color, rotationY = 0) => {
     return carGroup;
 };
 
-createSimpleCar(-5, -2.5, 0x666666, Math.PI / 2); // Voiture grise
-createSimpleCar( 5, -2.5, 0x882222, Math.PI / 2); // Voiture rouge
-createSimpleCar( -5, 2.5, 0x444488, Math.PI / 2); // Voiture bleue
-createSimpleCar( 5, 2.5, 0x228822, Math.PI / 2); // Voiture verte
+// 5 places sous l'abri en 1 seule rangée (X) x 5 colonnes (Z),
+// voitures orientées vers les arbres (axe +X), donc en longueur sur X
+const carColors = [0x666666, 0x882222, 0x444488, 0x228822, 0xd2a44b];
+const spotWidth = 2.6;   // largeur sur X (épaisseur de place)
+const spotLength = 5.2;  // longueur sur X (direction du véhicule)
+
+// Offsets RELATIFS au centre de l'abri
+const localX = [0];                         // 1 seule rangée, centrée
+const localZ = [-10, -5, 0, 5, 10];         // 5 colonnes le long de la longueur (±14)
+
+localX.forEach((lx, r) => {
+    localZ.forEach((lz, c) => {
+        const cx = roofCenter.x + lx;
+        const cz = roofCenter.z + lz;
+        // Marquage orienté en longueur sur X (voiture face aux arbres à droite)
+        createSpotMarkings(cx, cz, spotWidth, spotLength, 0.08, 'x');
+        const color = carColors[(r * localZ.length + c) % carColors.length];
+        createSimpleCar(cx, cz, color, Math.PI / 2); // orientation +X (vers les arbres)
+    });
+});
 
 
 // Arbres (simplifiés)
@@ -275,15 +358,59 @@ const createSimpleTree = (x, z, height = 5) => {
 };
 
 // Quelques arbres le long du parking
-createSimpleTree(18, -20);
-createSimpleTree(18, -10);
-createSimpleTree(18, 0);
-createSimpleTree(18, 10);
-createSimpleTree(18, 20);
+[-20, -10, 0, 10, 20].forEach(z => {
+    // Retire l'arbre dans la zone de sortie
+    if (Math.abs(z - EXIT_Z) > EXIT_GAP_Z) {
+        createSimpleTree(18, z);
+    }
+});
 
 createSimpleTree(10, -28);
 createSimpleTree(0, -28);
 createSimpleTree(-10, -28);
+
+// Panneau EXIT près de l'ouverture
+function createExitSign(x, z) {
+    // Poteau
+    const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.15, 2.2, 12),
+        new THREE.MeshStandardMaterial({ color: 0x888888 })
+    );
+    pole.position.set(x, 1.1, z);
+    pole.castShadow = true;
+    pole.receiveShadow = true;
+
+    // Panneau rectangulaire avec texture canvas "EXIT"
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#2e7d32'; // vert
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 80px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('EXIT', canvas.width / 2, canvas.height / 2);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.anisotropy = 4;
+    const signMat = new THREE.MeshBasicMaterial({ map: tex, transparent: false, side: THREE.DoubleSide });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.4), signMat);
+    sign.position.set(x, 2.0, z);
+    // Oriente le panneau le long de la voie (pas face aux voitures)
+    sign.rotation.y = 0; // normal vers +Z
+
+    const group = new THREE.Group();
+    group.add(pole);
+    group.add(sign);
+    scene.add(group);
+    return group;
+}
+
+// Place le panneau à côté du dos d'âne mais décalé en Z pour ne pas être en face des voitures
+// Proche bordure (x≈18.8), en amont de l'ouverture
+const EXIT_SIGN_POS = { x: 10, z: EXIT_Z - 7 };
+createExitSign(EXIT_SIGN_POS.x, EXIT_SIGN_POS.z);
 
 
 // --- Fonction d'animation et de rendu ---
