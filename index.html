@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23007acc'/><text x='50' y='65' font-size='60' text-anchor='middle' fill='white' font-family='Arial'>P</text></svg>">
+
+  <meta charset="utf-8" />
+  <title>Parking vide - Three.js</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { margin: 0; overflow: hidden; background: #bfd6ea; }
+    #ui { position: fixed; top: 10px; left: 10px; z-index: 10; }
+  </style>
+
+  <!-- mappe le specifier "three" vers le module ES sur unpkg -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.158.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="ui"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
