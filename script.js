@@ -59,11 +59,62 @@ directionalLight.shadow.camera.bottom = -25;
 
 // --- Chapitre 4: Travailler avec ThreeJS materials ---
 
-// Matériau pour l'asphalte (sol du parking)
+// Texture procédurale pour dalles pavées (CanvasTexture)
+function makePaverTexture({ tileW = 64, tileH = 36, grout = 4, hue = 0, sat = 0, light = 50 } = {}) {
+    // Motif minimal périodique: 2 colonnes x 2 rangées avec décalage d'une demi-brique
+    const w = 2 * tileW + grout;
+    const h = 2 * tileH + grout;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // Couleurs (version plus foncée)
+    const groutColor = '#4c4c4c'; // joint foncé
+    const stones = ['#6a6a6a', '#5e5e5e', '#707070', '#646464'];
+
+    // Fond = joint pour que les bords répétés restent cohérents
+    ctx.fillStyle = groutColor;
+    ctx.fillRect(0, 0, w, h);
+
+    // Fonction utilitaire: dessiner un pavé avec légère variation de teinte
+    const drawStone = (x, y, tw, th) => {
+        const pad = 1.5; // léger chanfrein visuel
+        ctx.fillStyle = stones[Math.floor(Math.random() * stones.length)];
+        ctx.fillRect(x + pad, y + pad, tw - 2 * pad, th - 2 * pad);
+        // Ombre légère pour relief
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + pad + 0.5, y + pad + 0.5, tw - 2 * pad - 1, th - 2 * pad - 1);
+    };
+
+    // Rangée 0 (non décalée)
+    for (let col = 0; col < 2; col++) {
+        const x = col * (tileW + grout);
+        const y = 0;
+        drawStone(x, y, tileW, tileH);
+    }
+    // Rangée 1 (décalée d'une demi-brique). On couvre un peu à gauche et à droite pour la répétition
+    const y1 = tileH + grout;
+    for (let col = -1; col <= 2; col++) {
+        const x = col * (tileW + grout) + Math.floor((tileW + grout) / 2);
+        if (x + tileW < 0 || x > w) continue; // clip simple
+        drawStone(x, y1, tileW, tileH);
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = 4;
+    return tex;
+}
+
+// Matériau du sol pavé
+const groundTexture = makePaverTexture({ tileW: 56, tileH: 32, grout: 4 });
+groundTexture.repeat.set(6, 6); // répéter sur le plan (60x60)
 const groundMaterial = new THREE.MeshStandardMaterial({
-    color: 0x333333, // Gris foncé
-    roughness: 0.8,   // Très rugueux
-    metalness: 0.0    // Non métallique
+    map: groundTexture,
+    color: 0x555555, // assombrit la texture (multiplicatif)
+    roughness: 0.95,
+    metalness: 0.0
 });
 
 // Matériau pour les marquages au sol (blanc)
