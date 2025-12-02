@@ -1,4 +1,4 @@
-Troubel shoooting terminal : 
+### Troubel shoooting terminal : 
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-Run the rpject : 
+### Run the rpject : 
 npm run dev 
