@@ -68,8 +68,8 @@ function makePaverTexture({ tileW = 64, tileH = 36, grout = 4, hue = 0, sat = 0,
     const ctx = canvas.getContext('2d');
 
     // Couleurs (version plus foncée)
-    const groutColor = '#4c4c4c'; // joint foncé
-    const stones = ['#6a6a6a', '#5e5e5e', '#707070', '#646464'];
+    const groutColor = '#2a2a2aff';
+    const stones = ['#c0c0c0', '#b8b8b8', '#c8c8c8', '#bcbcbc'];
 
     // Fond = joint pour que les bords répétés restent cohérents
     ctx.fillStyle = groutColor;
@@ -107,11 +107,11 @@ function makePaverTexture({ tileW = 64, tileH = 36, grout = 4, hue = 0, sat = 0,
 }
 
 // Matériau du sol pavé
-const groundTexture = makePaverTexture({ tileW: 56, tileH: 32, grout: 4 });
-groundTexture.repeat.set(6, 6); // répéter sur le plan (60x60)
+const groundTexture = makePaverTexture({ tileW: 20, tileH: 10, grout: 4 });
+groundTexture.repeat.set(9, 9); // répéter sur le plan (60x60)
 const groundMaterial = new THREE.MeshStandardMaterial({
     map: groundTexture,
-    color: 0x555555, // assombrit la texture (multiplicatif)
+    color: 0xCCCCCC, // assombrit la texture (multiplicatif)
     roughness: 0.95,
     metalness: 0.0
 });
@@ -345,48 +345,225 @@ building.receiveShadow = true;
 building.castShadow = true; // Pour projeter des ombres sur d'autres éléments
 scene.add(building);
 
-// Abri de parking (toit et piliers)
-// Taille réduite: longueur (Z) 26, largeur (X) 8 pour couvrir une seule colonne
-const roofGeometry = new THREE.BoxGeometry(26, 0.3, 8);
-const roof = new THREE.Mesh(roofGeometry, structureMaterial);
-// On pivote l'abri de 90° pour que sa longueur (25) soit parallèle à la ligne d'arbres (axe Z)
-roof.rotation.y = Math.PI / 2;
-// On l'approche des arbres (x≈18) mais on laisse un petit espace (~2.5 unités)
-// Décale l'ensemble abri + voitures vers la gauche (éloigné des arbres à droite)
-const roofCenter = { x: -2, y: 4.5, z: -5 };
-roof.position.set(roofCenter.x, roofCenter.y, roofCenter.z);
-roof.castShadow = true;
-roof.receiveShadow = true;
-scene.add(roof);
 
-// Après création de l'abri, on vise son centre
+
+
+// ========== PANCARTE "TEKNIK INFORMATIKA" SUR LE BÂTIMENT ==========
+function createBuildingSign() {
+    // Créer un canvas pour la texture de la pancarte
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    
+    // Fond blanc/gris clair
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Bordure
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+    
+    // Texte "TEKNIK INFORMATIKA" en rouge/orange
+    ctx.fillStyle = '#000000ff'; // Rouge-orange comme sur l'image
+    ctx.font = 'bold 120px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('TEKNIK', canvas.width / 2, canvas.height / 2 - 50);
+    ctx.fillText('INFORMATIKA', canvas.width / 2, canvas.height / 2 + 60);
+    
+    // Créer la texture
+    const signTexture = new THREE.CanvasTexture(canvas);
+    signTexture.anisotropy = 16;
+    
+    // Matériau de la pancarte
+    const signMaterial = new THREE.MeshStandardMaterial({
+        map: signTexture,
+        transparent: false,
+        side: THREE.DoubleSide,
+        emissive: 0x222222,
+        emissiveIntensity: 0.1
+    });
+    
+    // Géométrie de la pancarte (panneau plat)
+    const signGeometry = new THREE.PlaneGeometry(16, 4);
+    const sign = new THREE.Mesh(signGeometry, signMaterial);
+    
+    // Positionner la pancarte sur la face avant du bâtiment
+    // Le bâtiment est à x=-18, donc sa face avant (vers +X) est à x=-18+10=-8
+    sign.position.set(-17, 20, 8.1); // Hauteur 23 pour être en haut du bâtiment
+    sign.rotation.y = 2*Math.PI ; // Orienter vers la caméra (face visible depuis le parking)
+    
+    sign.castShadow = true;
+    sign.receiveShadow = true;
+    
+    scene.add(sign);
+    
+    
+    
+    return sign;
+}
+
+// Créer la pancarte
+createBuildingSign();
+
+
+    
+//========== ABRI DE PARKING AVEC LAMELLES MÉTALLIQUES ==========//
+//========== ABRI DE PARKING AVEC LAMELLES MÉTALLIQUES ==========//
+
+const lamellaMaterial = new THREE.MeshStandardMaterial({
+  color: 0x909090,      // Gris aluminium
+  metalness: 0.6,
+  roughness: 0.35,
+  envMapIntensity:  1.2,
+  side: THREE.DoubleSide
+});
+
+// Paramètres de l'abri
+const roofCenter = { x: -2, y: 4.9, z: -5 };
+const roofWidth = 8;   // largeur (X après rotation)
+const roofLength = 26; // longueur (Z après rotation)
+
+// Paramètres des lamelles
+const lamellaWidth = 0.4;      // largeur de chaque lamelle
+const lamellaThickness = 0.05; // épaisseur
+const lamellaSpacing = 0.15;   // espacement entre lamelles
+const lamellaAngle = Math.PI / 7; // inclinaison (30 degrés)
+
+// Groupe pour toutes les lamelles
+const roofGroup = new THREE.Group();
+
+// Calculer le nombre de lamelles nécessaires
+const numLamellas = Math.floor(roofWidth / (lamellaWidth + lamellaSpacing));
+const startOffset = -(numLamellas * (lamellaWidth + lamellaSpacing)) / 2;
+
+// Créer les lamelles
+for (let i = 0; i < numLamellas; i++) {
+  const lamellaGeometry = new THREE.BoxGeometry(
+    lamellaWidth,
+    lamellaThickness,
+    roofLength
+  );
+  
+  const lamella = new THREE.Mesh(lamellaGeometry, lamellaMaterial);
+  
+  // Position de chaque lamelle
+  const xPos = startOffset + i * (lamellaWidth + lamellaSpacing);
+  lamella.position.set(xPos, 0, 0);
+  
+  // Inclinaison des lamelles
+  lamella.rotation.z = lamellaAngle;
+  
+  lamella.castShadow = true;
+  lamella.receiveShadow = true;
+  
+  roofGroup.add(lamella);
+}
+
+// Cadre de structure (TEXTURE OPTIMISÉE)
+const frameThickness = 0.2;
+const frameMaterial = new THREE.MeshStandardMaterial({
+  color: 0x3a3a3a,      // Gris foncé
+  metalness: 0.85,
+  roughness: 0.3
+});
+
+// Poutre avant
+const frontBeam = new THREE.Mesh(
+  new THREE.BoxGeometry(roofWidth, frameThickness, frameThickness),
+  frameMaterial
+);
+frontBeam.position.set(0, 0, -roofLength / 2);
+frontBeam.castShadow = true;
+roofGroup.add(frontBeam);
+
+// Poutre arrière
+const backBeam = frontBeam.clone();
+backBeam.position.set(0, 0, roofLength / 2);
+roofGroup.add(backBeam);
+
+// Poutres latérales
+const sideBeam1 = new THREE.Mesh(
+  new THREE.BoxGeometry(frameThickness, frameThickness, roofLength),
+  frameMaterial
+);
+sideBeam1.position.set(-roofWidth / 2, 0, 0);
+sideBeam1.castShadow = true;
+roofGroup.add(sideBeam1);
+
+const sideBeam2 = sideBeam1.clone();
+sideBeam2.position.set(roofWidth / 2, 0, 0);
+roofGroup.add(sideBeam2);
+
+// Positionner et orienter le groupe complet
+roofGroup.rotation.y = Math.PI;
+roofGroup.position.set(roofCenter.x, roofCenter.y, roofCenter.z);
+scene.add(roofGroup);
+
+// Cibler le centre de l'abri
 controls.target.set(roofCenter.x, 0.5, roofCenter.z);
 camera.lookAt(controls.target);
 
-// Piliers de l'abri
-const pillarGeometry = new THREE.BoxGeometry(0.8, 4.5, 0.8);
-const pillar1 = new THREE.Mesh(pillarGeometry, structureMaterial);
-// Avec l'abri tourné: largeur sur X = 8 (±4), longueur sur Z = 26 (±13)
-// On place les piliers avec un léger retrait des bords
+// ========== PILIERS MODERNES (TEXTURE OPTIMISÉE) ==========
+const pillarMaterial = new THREE.MeshStandardMaterial({ 
+  color: 0x1f1f1f,      // Noir anthracite
+  metalness: 0.92,
+  roughness: 0.25
+});
+
 const halfW = 8 / 2, halfL = 26 / 2;
 const insetX = 1.0, insetZ = 2.0;
-const px = halfW - insetX;     // ≈ 3.0
-const pz = halfL - insetZ;     // ≈ 11.0
-pillar1.position.set(roofCenter.x - px, 2.25, roofCenter.z - pz);
-pillar1.castShadow = true;
-pillar1.receiveShadow = true;
+const px = halfW - insetX;
+const pz = halfL - insetZ;
+
+// Fonction pour créer un pilier moderne (tube fin avec base)
+const createModernPillar = (x, z) => {
+  const pillarGroup = new THREE.Group();
+  
+  // Corps principal du pilier (tube fin)
+  const pillarBody = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.15, 4.5, 16),
+    pillarMaterial
+  );
+  pillarBody.position.y = 2.25;
+  pillarBody.castShadow = true;
+  pillarGroup.add(pillarBody);
+  
+  // Base élargie
+  const pillarBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.25, 0.3, 0.3, 16),
+    pillarMaterial
+  );
+  pillarBase.position.y = 0.15;
+  pillarBase.castShadow = true;
+  pillarGroup.add(pillarBase);
+  
+  // Chapiteau (haut du pilier)
+  const pillarTop = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.25, 0.15, 0.3, 16),
+    pillarMaterial
+  );
+  pillarTop.position.y = 4.65;
+  pillarTop.castShadow = true;
+  pillarGroup.add(pillarTop);
+  
+  pillarGroup.position.set(x, 0, z);
+  return pillarGroup;
+};
+
+// Créer les 4 piliers modernes
+const pillar1 = createModernPillar(roofCenter.x - px, roofCenter.z - pz);
 scene.add(pillar1);
 
-const pillar2 = pillar1.clone();
-pillar2.position.set(roofCenter.x + px, 2.25, roofCenter.z - pz);
+const pillar2 = createModernPillar(roofCenter.x + px, roofCenter.z - pz);
 scene.add(pillar2);
 
-const pillar3 = pillar1.clone();
-pillar3.position.set(roofCenter.x - px, 2.25, roofCenter.z + pz);
+const pillar3 = createModernPillar(roofCenter.x - px, roofCenter.z + pz);
 scene.add(pillar3);
 
-const pillar4 = pillar1.clone();
-pillar4.position.set(roofCenter.x + px, 2.25, roofCenter.z + pz);
+const pillar4 = createModernPillar(roofCenter.x + px, roofCenter.z + pz);
 scene.add(pillar4);
 
 
