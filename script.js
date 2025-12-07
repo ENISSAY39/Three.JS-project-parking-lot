@@ -508,9 +508,9 @@ camera.lookAt(controls.target);
 
 // ========== PILIERS MODERNES (TEXTURE OPTIMISÉE) ==========
 const pillarMaterial = new THREE.MeshStandardMaterial({ 
-  color: 0x1f1f1f,      // Noir anthracite
-  metalness: 0.92,
-  roughness: 0.25
+  color: 0xffffff,      // Blanc
+  metalness: 0.1,      // Légèrement réduit pour un aspect plus réaliste
+  roughness: 0.      // Plus lisse pour un effet métallisé brillant
 });
 
 const halfW = 8 / 2, halfL = 26 / 2;
