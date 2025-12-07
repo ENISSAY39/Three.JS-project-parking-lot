@@ -5,7 +5,6 @@ import { OrbitControls } from './lib/OrbitControls.js'; // Le chemin vers votre 
 
 // 1. Scène (Scene)
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xcce0ff); // Un fond bleu clair pour simuler le ciel
 
 // 2. Caméra (Camera)
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -131,10 +130,87 @@ const structureMaterial = new THREE.MeshStandardMaterial({
     metalness: 0.1
 });
 
-// Matériau pour le bâtiment (blanc cassé)
+// Texture procédurale pour briques du bâtiment (CanvasTexture)
+function makeBrickTexture() {
+    const brickW = 80;  // Largeur d'une brique
+    const brickH = 40;  // Hauteur d'une brique
+    const mortarSize = 4; // Épaisseur du joint
+    
+    // Motif: 2 briques en largeur, 2 en hauteur (avec décalage)
+    const w = 2 * brickW + mortarSize;
+    const h = 2 * brickH + 2 * mortarSize;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    
+    // Couleur du mortier (joints clairs)
+    ctx.fillStyle = '#c9c9c9';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Différentes teintes de briques rouges/orangées
+    const brickColors = [
+        '#a0533a',
+        '#8d4630',
+        '#9a5038',
+        '#874228',
+        '#925541'
+    ];
+    
+    // Fonction pour dessiner une brique avec variations
+    const drawBrick = (x, y, width, height) => {
+        const margin = 2; // Marge pour le joint
+        
+        // Choisir une couleur de brique aléatoire
+        ctx.fillStyle = brickColors[Math.floor(Math.random() * brickColors.length)];
+        ctx.fillRect(x + margin, y + margin, width - margin, height - margin);
+        
+        // Ajouter des variations de texture (taches plus sombres)
+        for (let i = 0; i < 8; i++) {
+            const px = x + margin + Math.random() * (width - margin);
+            const py = y + margin + Math.random() * (height - margin);
+            const size = 2 + Math.random() * 4;
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.1 + Math.random() * 0.15})`;
+            ctx.fillRect(px, py, size, size);
+        }
+        
+        // Ajouter un léger ombrage en bas pour effet 3D
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(x + margin, y + height - margin - 3, width - margin, 2);
+        
+        // Ajouter un léger reflet en haut
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillRect(x + margin, y + margin, width - margin, 2);
+    };
+    
+    // Première rangée (non décalée)
+    drawBrick(0, 0, brickW, brickH);
+    drawBrick(brickW + mortarSize, 0, brickW, brickH);
+    
+    // Deuxième rangée (décalée d'une demi-brique)
+    const offsetX = (brickW + mortarSize) / 2;
+    const y2 = brickH + mortarSize;
+    
+    // Brique partielle à gauche
+    drawBrick(-offsetX, y2, brickW, brickH);
+    // Brique complète au centre
+    drawBrick(brickW + mortarSize - offsetX, y2, brickW, brickH);
+    // Brique partielle à droite
+    drawBrick(2 * (brickW + mortarSize) - offsetX, y2, brickW, brickH);
+    
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = 4;
+    return tex;
+}
+
+// Matériau pour le bâtiment avec texture de briques
+const brickTexture = makeBrickTexture();
+brickTexture.repeat.set(10, 8); // Répéter la texture sur le bâtiment
 const buildingMaterial = new THREE.MeshStandardMaterial({
-    color: 0xe0e0e0, // Blanc cassé
-    roughness: 0.7,
+    map: brickTexture,
+    roughness: 0.85,
     metalness: 0.0
 });
 
@@ -155,6 +231,100 @@ const treeFoliageMaterial = new THREE.MeshStandardMaterial({
 // Matériau pour les bordures de trottoir (jaune/noir)
 const curbYellowMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
 const curbBlackMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+
+// Texture procédurale pour le ciel avec nuages (CanvasTexture)
+function makeSkyTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    
+    // Créer un gradient de ciel (bleu clair en bas, plus foncé en haut)
+    const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+    gradient.addColorStop(0, '#87CEEB');  // Bleu ciel clair (horizon)
+    gradient.addColorStop(0.5, '#87CEEB'); // Bleu ciel
+    gradient.addColorStop(1, '#6BA3D4');  // Bleu plus foncé (zénith)
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Fonction pour dessiner un nuage duveteux
+    const drawCloud = (x, y, scale) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        
+        // Base du nuage avec plusieurs cercles
+        const circles = [
+            { x: 0, y: 0, r: 40 },
+            { x: 30, y: -5, r: 50 },
+            { x: 60, y: 0, r: 45 },
+            { x: 90, y: 5, r: 40 },
+            { x: 25, y: 15, r: 35 },
+            { x: 65, y: 18, r: 38 }
+        ];
+        
+        // Ombre légère du nuage
+        ctx.globalAlpha = 0.15;
+        ctx.fillStyle = '#000000';
+        circles.forEach(circle => {
+            ctx.beginPath();
+            ctx.arc(circle.x + 5, circle.y + 45, circle.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // Nuage principal (blanc)
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = '#ffffff';
+        circles.forEach(circle => {
+            ctx.beginPath();
+            ctx.arc(circle.x, circle.y + 40, circle.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // Reflets brillants sur le nuage
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#ffffff';
+        circles.forEach(circle => {
+            ctx.beginPath();
+            ctx.arc(circle.x - 10, circle.y + 30, circle.r * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        ctx.restore();
+    };
+    
+    // Dessiner plusieurs nuages à différentes positions et tailles
+    const clouds = [
+        { x: 100, y: 150, scale: 1.2 },
+        { x: 400, y: 100, scale: 0.9 },
+        { x: 700, y: 180, scale: 1.1 },
+        { x: 200, y: 400, scale: 0.8 },
+        { x: 600, y: 350, scale: 1.0 },
+        { x: 850, y: 250, scale: 0.85 },
+        { x: 50, y: 600, scale: 0.95 },
+        { x: 500, y: 650, scale: 1.15 },
+        { x: 900, y: 700, scale: 0.9 },
+        { x: 300, y: 850, scale: 1.05 }
+    ];
+    
+    clouds.forEach(cloud => {
+        drawCloud(cloud.x, cloud.y, cloud.scale);
+    });
+    
+    const tex = new THREE.CanvasTexture(canvas);
+    return tex;
+}
+
+// Créer une skybox (grande sphère englobant la scène)
+const skyTexture = makeSkyTexture();
+const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+const skyMaterial = new THREE.MeshBasicMaterial({
+    map: skyTexture,
+    side: THREE.BackSide  // Afficher la texture à l'intérieur de la sphère
+});
+const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+scene.add(sky);
 
 
 // --- Construction de la scène du parking ---
