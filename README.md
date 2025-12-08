@@ -1,8 +1,17 @@
-Three.js Parking Lot – Teknik Informatika Project
+# Three.js Parking Lot – Teknik Informatika Project
 📌 Final Project – Computer Graphics
-🧑‍💻 Author: Gharbi Yassine (ENISSAY39)
-🏫 Institut Teknologi Sepuluh Nopember (ITS)
-🚗 Project Overview
+🧑‍💻 Author: 
+- Gharbi Yassine (ENISSAY39)
+- Gharbi Yassine
+- Safwane Mkhinini
+- Abderrahmane Fajli
+- Naman Kumar (garginternationalco-dot)
+- Yanis Falahy
+
+🏫 **Institut Teknologi Sepuluh Nopember (ITS)**
+
+
+## 🚗 Project Overview
 
 This project is a **3D interactive visualization** of the Teknik Informatika parking lot, built using **Three.js**.  
 It features procedural materials, realistic lighting, a metal-roof parking shelter, environment objects, trees, cars, and more.
@@ -56,25 +65,20 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 3. Start development server : 
 ```bash
 npm run dev
+```
+4. The project will open at:
 
-The project will open at:
-http://localhost:3000
+# ![alt text](npm_run_dev.png)
 
-🖼️ Preview
+## 🖼️ Preview
 
 (Optional: add a screenshot later)
 
-📦 Technologies Used
+## 📦 Technologies Used
 
-Three.js
+- **Three.js**
+- **JavaScript (ES Modules)**
+- **CanvasTexture / WebGL**
+- **Vite / NPM**
 
-JavaScript (ES Modules)
 
-CanvasTexture / WebGL
-
-Vite / NPM
-
-📜 License
-
-This project is open-source.
-Feel free to fork, study, or improve it.
