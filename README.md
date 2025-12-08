@@ -10,6 +10,7 @@
 
 🏫 **Institut Teknologi Sepuluh Nopember (ITS)**
 
+---
 
 ## 🚗 Project Overview
 
@@ -36,20 +37,6 @@ The goal is to demonstrate **core computer graphics concepts** using WebGL & Jav
 
 ---
 
-## 📁 Project Structure
-
-Three.JS-project-parking-lot/
-├── lib/ # OrbitControls and dependencies
-├── node_modules/
-├── index.html # Entry point
-├── script.js # Three.js main scene logic
-├── style.css # UI styling
-├── package.json
-└── README.md
-
-
----
-
 ## ▶️ How to Run the Project
 
 1. Install dependencies : 
@@ -70,11 +57,15 @@ npm run dev
 
 # ![alt text](npm_run_dev.png)
 
+---
+
 ## 🖼️ Preview
 
-(Optional: add a screenshot later)
+# ![alt text](image.png)
 
 ## 📦 Technologies Used
+
+
 
 - **Three.js**
 - **JavaScript (ES Modules)**
