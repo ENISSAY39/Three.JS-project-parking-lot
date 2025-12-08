@@ -1,12 +1,12 @@
 # 🚗 Three.js Parking Lot – Teknik Informatika Project
 
 📌 **Final Project – Computer Graphics**  
-🧑‍💻 **Author:
-** Gharbi Yassine (ENISSAY39)  
-** Safwane Mkhinini
-** Abderrahmane Fajli
-** Naman Kumar
-** Yanis Falahy
+🧑‍💻 **Author** :
+-**Gharbi Yassine** (ENISSAY39)  
+-**Safwane Mkhinini** (Safwane)
+-**Abderrahmane Fajli** (AbderF)
+-**Naman Kumar** (garginternationalco-dot)
+-**Yanis Falahy** (Yaniss9)
 
 🏫 **Institut Teknologi Sepuluh Nopember (ITS)**
 
