@@ -61,7 +61,10 @@ npm run dev
 
 ## 🖼️ Preview
 
-# ![alt text](image.png)
+## 🖼️ Preview
+
+![Parking Lot Preview](./Screenshot%202025-12-09%20225821.png)
+
 
 ## 📦 Technologies Used
 
