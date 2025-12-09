@@ -28,6 +28,7 @@ The goal is to demonstrate **core computer graphics concepts** using WebGL & Jav
 - ✔ Procedural sky with clouds (CanvasTexture)  
 - ✔ Metal lamella roof structure (parking shelter)  
 - ✔ Auto-generated parking slot markings  
+- ✔ Dedicated **bike parking area** (structure only, no bike models)  
 - ✔ Low-poly cars  
 - ✔ Trees & environmental props  
 - ✔ Curb sections (yellow/black alternating)  
@@ -59,7 +60,7 @@ npm run dev
 
 ---
 
-## 🖼️ Preview
+
 
 ## 🖼️ Preview
 
