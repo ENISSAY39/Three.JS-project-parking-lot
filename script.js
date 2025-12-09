@@ -729,7 +729,33 @@ localX.forEach((lx, r) => {
         createSimpleCar(cx, cz, color, Math.PI / 2); // orientation +X (vers les arbres)
     });
 });
+// bikes
+// -------------------------------
+// Create Bike Parking Slots
+// -------------------------------
+function createBikeParking(x, y, z, count = 6, slotWidth = 1, slotHeight = 2) {
 
+    const group = new THREE.Group();
+
+    const slotGeometry = new THREE.PlaneGeometry(slotWidth, slotHeight);
+    const slotMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffff00,   // yellow lines for bikes
+        side: THREE.DoubleSide
+    });
+
+    for (let i = 0; i < count; i++) {
+        const slot = new THREE.Mesh(slotGeometry, slotMaterial);
+        slot.rotation.x = -Math.PI / 2;
+
+        slot.position.set(x + i * (slotWidth + 0.3), y, z);
+
+        group.add(slot);
+    }
+
+    scene.add(group);
+}
+
+createBikeParking(-5, 0.01, 8, 8); // x, y, z, number of slots
 
 // Arbres (simplifiés)
 const createSimpleTree = (x, z, height = 5) => {
